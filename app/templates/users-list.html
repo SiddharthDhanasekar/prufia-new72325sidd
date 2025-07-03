@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        .file-preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .file-preview {
+            width: 120px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: visible;
+            transition: transform 0.2s;
+        }
+        .file-preview:hover {
+            cursor: pointer;
+            transform: translateY(-3px);
+            z-index: 1;
+        }
+        .file-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        .file-name {
+            word-break: break-all;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        .file-size {
+            font-size: 11px;
+            color: #777;
+        }
+        .preview-image {
+            max-width: 100px;
+            max-height: 100px;
+            object-fit: contain;
+            border-radius: 3px;
+        }
+        .pdf-icon { color: #e74c3c; }
+        .doc-icon { color: #2c3e50; }
+        .xls-icon { color: #27ae60; }
+        .ppt-icon { color: #e67e22; }
+        .zip-icon { color: #9b59b6; }
+        .img-icon { color: #3498db; }
+        .delete-preview {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ff4444;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.2s ease;
+            z-index: 2;
+        }
+        .file-preview:hover .delete-preview {
+            opacity: 1;
+            transform: scale(1);
+            top: -12px;
+        }
+        .delete-preview:hover {
+            background: #ff0000;
+            transform: scale(1.1) !important;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+        }
+        .teacher-body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+        }
+        .dashboard-header {
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        .dashboard-header h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .dashboard-header i {
+            margin-right: 10px;
+        }
+        .content-container {
+            max-width: 1440px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .upload-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+            width: 100%;
+            max-width: 800px;
+        }
+        .upload-form {
+            margin-bottom: 50px;
+        }
+        .form-header h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 1.5rem;
+        }
+        .form-header .subtitle {
+            color: #7f8c8d;
+            margin-top: 5px;
+            font-size: 0.9rem;
+        }
+        .file-input-label {
+            display: block;
+            margin-bottom: 15px;
+        }
+        .label-text {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        .file-input-wrapper {
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+        }
+        .file-input-wrapper:hover {
+            border-color: #4a6fa5;
+            background-color: #f0f5ff;
+        }
+        .file-input-wrapper i {
+            font-size: 2rem;
+            color: #4a6fa5;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .file-input-text {
+            color: #7f8c8d;
+            font-size: 0.95rem;
+        }
+        .hidden-file-input {
+            display: none;
+        }
+        .file-preview-container {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            margin-top: 15px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 20px;
+            color: #95a5a6;
+        }
+        .empty-state i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            opacity: 0.6;
+        }
+        .empty-state p {
+            margin: 0;
+        }
+        .form-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .primary-button, .secondary-button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .primary-button {
+            background-color: #4a6fa5;
+            color: white;
+        }
+        .primary-button:hover {
+            background-color: #3a5a8f;
+            transform: translateY(-1px);
+        }
+        .secondary-button {
+            background-color: #f8f9fa;
+            color: #2c3e50;
+            border: 1px solid #e0e0e0;
+        }
+        .secondary-button:hover {
+            background-color: #e9ecef;
+        }
+        .file-preview-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .file-preview-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .file-preview-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        .file-preview-container::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body class="teacher-body">
+    <div class="dashboard-header">
+        <h2><i class="fas fa-chalkboard-teacher"></i> Prufia Teacher Dashboard</h2>
+    </div>
+    <div class="content-container">
+        <div style="width: 50%; padding:10px;">
+            <form id="uploadForm" class="upload-form">
+                <div class="form-header">
+                    <h3><i class="fas fa-upload"></i> Upload Assignments</h3>
+                    <p class="subtitle">Upload files for your members to complete</p>
+                </div>
+                <div class="form-group">
+                    <label class="file-input-label">
+                        <span class="label-text">Select files (multiple allowed)</span>
+                        <div class="file-input-wrapper">
+                            <i class="fas fa-folder-open"></i>
+                            <span class="file-input-text">Choose files or drag & drop</span>
+                            <input type="file" id="assignmentFiles" name="files" multiple class="hidden-file-input">
+                        </div>
+                    </label>
+                    
+                    <div id="filePreviews" class="file-preview-container">
+                        <div class="empty-state">
+                            <i class="fas fa-file-alt"></i>
+                            <p>No files selected</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="primary-button">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload Files
+                    </button>
+                    <button type="reset" id="clearSelectionBtn" class="secondary-button">
+                        <i class="fas fa-trash-alt"></i> Clear All
+                    </button>
+                </div>
+            </form>            
+            <div id="uploadResults"></div>
+            <div id="matchingResults"></div>           
+            <div id="matchResults"></div>
+            <div style="background: var(--white); margin-top:35px; padding: 20px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm);">
+                <h3><i class="fas fa-info-circle"></i> Confidence Score Guide</h3>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 10px;">
+                    <span class="flag green">Over 85</span>
+                    <div>
+                        <strong>Strong Match</strong><br>
+                        Authored by member. Light edits okay. Trusted submission.
+                    </div>
+                    </li>
+                    <li style="margin-bottom: 10px; display: flex; align-items: flex-start; gap: 10px;">
+                    <span class="flag yellow">70-84</span>
+                    <div>
+                        <strong>Likely Match</strong><br>
+                        May include AI tools or human help. Review recommended.
+                    </div>
+                    </li>
+                    <li style="display: flex; align-items: flex-start; gap: 10px;">
+                    <span class="flag red">Below 70</span>
+                    <div>
+                        <strong>Probable Mismatch</strong><br>
+                        Unlikely to be member's work. Investigation needed.
+                    </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div> 
+    
+    <div id="toast" class="toast"></div>
+    
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+        const uploadForm = document.getElementById('uploadForm');
+        let uploadedFilename='';
+        function toggleDetails(button) {
+            const item = button.closest('.history-item');
+            item.classList.toggle('expanded');
+            button.classList.toggle('rotate-180');
+        }
+        document.getElementById('clearSelectionBtn').addEventListener('click', function() {
+            document.getElementById('assignmentFiles').value = '';
+            const filePreviews = document.getElementById('filePreviews');
+            filePreviews.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-file-alt"></i>
+                    <p>No files selected</p>
+                </div>
+            `;
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-check"></i> Cleared';
+            setTimeout(() => {
+                this.innerHTML = originalText;
+            }, 1500);
+        });
+        document.getElementById('assignmentFiles').addEventListener('change', function(e) {
+            const files = e.target.files;
+            const previewContainer = document.getElementById('filePreviews');
+            previewContainer.innerHTML = ''; 
+            
+            if (files.length === 0) return;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileExt = file.name.split('.').pop().toLowerCase();
+                const previewDiv = document.createElement('div');
+                previewDiv.className = 'file-preview';
+                previewDiv.dataset.fileIndex = i; 
+                const deleteBtn = document.createElement('div');
+                deleteBtn.className = 'delete-preview';
+                deleteBtn.innerHTML = '×';
+                deleteBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    removeFileFromList(i);
+                    previewDiv.remove();
+                });
+                
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewDiv.innerHTML = `
+                            <div><i class="fas fa-file-image img-icon file-icon"></i></div>
+                            <img src="${e.target.result}" class="preview-image" alt="${file.name}">
+                            <div class="file-name">${truncateFileName(file.name)}</div>
+                            <div class="file-size">${formatFileSize(file.size)}</div>
+                        `;
+                        previewDiv.appendChild(deleteBtn);
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    let iconClass = 'fa-file';
+                    let extraClass = '';
+                    if (fileExt === 'pdf') {
+                        iconClass = 'fa-file-pdf';
+                        extraClass = 'pdf-icon';
+                    } 
+                    else if (fileExt === 'doc' || fileExt === 'docx') {
+                        iconClass = 'fa-file-word';
+                        extraClass = 'doc-icon';
+                    }
+                    else if (fileExt === 'xls' || fileExt === 'xlsx') {
+                        iconClass = 'fa-file-excel';
+                        extraClass = 'xls-icon';
+                    }                    
+                    else if (fileExt === 'txt') iconClass = 'fa-file-alt';
+                    
+                    previewDiv.innerHTML = `
+                        <i class="fas ${iconClass} file-icon ${extraClass}"></i>
+                        <div class="file-name">${truncateFileName(file.name)}</div>
+                        <div class="file-size">${formatFileSize(file.size)}</div>
+                    `;
+                    previewDiv.appendChild(deleteBtn);
+                }
+                
+                previewContainer.appendChild(previewDiv);
+            }
+        });
+
+        function removeFileFromList(index) {
+            const input = document.getElementById('assignmentFiles');
+            const files = Array.from(input.files);
+            files.splice(index, 1);
+            const dataTransfer = new DataTransfer();
+            files.forEach(file => dataTransfer.items.add(file));
+            input.files = dataTransfer.files;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function truncateFileName(name) {
+            if (name.length > 15) {
+                return name.substring(0, 10) + '...' + name.split('.').pop();
+            }
+            return name;
+        }
+
+        function deleteItem(event, id) {
+            event.stopPropagation();
+            if (confirm(`Are you sure you want to delete submission ${id}? This cannot be undone.`)) {
+                showToast(`Deleting submission ${id}...`, 'info');
+                setTimeout(() => {
+                    event.target.closest('.history-item').style.opacity = '0';
+                    setTimeout(() => {
+                        event.target.closest('.history-item').remove();
+                        showToast(`Submission ${id} deleted`, 'error');
+                    }, 300);
+                }, 800);
+            }
+        }
+
+        function showToast(message, type = 'info', duration = 3000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const files = document.getElementById('assignmentFiles').files;
+            if (files.length === 0) {
+                showToast('Please select at least one file.', 'error');
+                return;
+            }
+
+            showToast(`Uploading ${files.length} file(s)...`, 'info', 5000);
+            
+            try {
+                const formData = new FormData();
+                const timestamp = Date.now();
+                
+                Array.from(files).forEach(file => {
+                    formData.append('files', file);
+                    formData.append('original_names', file.name);
+                    formData.append('timestamps', timestamp.toString());
+                });
+
+                const uploadResponse = await fetch('/upload_assignments', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error(`Server responded with ${uploadResponse.status}`);
+                }
+
+                const uploadData = await uploadResponse.json();
+                
+                displayUploadResults(uploadData);
+                showToast(`${files.length} file(s) uploaded successfully!`, 'success');
+                
+                showToast('Starting matching process...', 'info', 3000);
+                
+                const matchResponse = await fetch('/match_assignments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        timestamp: timestamp,
+                        file_count: files.length
+                    })
+                });
+
+                if (!matchResponse.ok) {
+                    throw new Error(`Matching failed with status ${matchResponse.status}`);
+                }
+
+                const matchData = await matchResponse.json();
+                displayMatchingResults(matchData);
+                console.log("matchdata==",matchData)
+                showToast(`Matching completed for ${files.length} file(s)!`, 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showToast(`Operation failed: ${error.message}`, 'error');
+            }
+        });
+
+       
+        function displayUploadResults(data) {
+            const resultsDiv = document.getElementById('uploadResults');
+            resultsDiv.innerHTML = '<h4><i class="fas fa-check-circle"></i> Uploaded successfully</h4>';           
+        }
+
+        function displayMatchingResults(data) {
+            const resultsDiv = document.getElementById('matchingResults');
+            resultsDiv.innerHTML = '<h4><i class="fas fa-check-circle"></i> All matches were completed successfully.</h4>';           
+            
+        }
+
+    </script>
+</body>
+</html>

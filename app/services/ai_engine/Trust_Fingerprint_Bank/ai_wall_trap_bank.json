@@ -1,0 +1,9 @@
+{
+    "clusters": [
+        {
+            "name": "PRUFIA AI Wall \u2013 Vanguard S1",
+            "description": "Initial 3-line placeholder AI suppression wall for testing. Effective but non-proprietary.",
+            "logic": "(pgfi < 14 and sm < 20 and pf < 25) or\n(mc > 92 and eb == 100 and sm < 30) or\n(sf < 30 and pf < 20 and sm < 25 and mc > 90)"
+        }
+    ]
+}

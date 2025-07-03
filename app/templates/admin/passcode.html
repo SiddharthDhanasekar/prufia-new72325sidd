@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Passcode Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/passcode.css') }}">
+<body>
+    <div class="container mt-4" style="margin-left:0;">
+        <h1 class="mb-4">Member Passcode Management</h1>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Members List</h5>
+                <div>
+                    <span id="socket-status" class="badge bg-secondary">Connecting...</span>
+                    <button id="downloadCsvBtn" class="btn btn-sm btn-success ms-2">
+                        <i class="bi bi-download"></i> Download as CSV
+                    </button>
+                    <button id="resetAllBtn" class="btn btn-sm btn-warning ms-2">
+                        <i class="bi bi-arrow-repeat"></i> Reset All Passcodes
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Class</th>
+                                <th>Passcode</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in members %}
+                            <tr data-member-id="{{ member['member_id'] }}">
+                                <td>{{ member['member_id'] }}</td>
+                                <td>{{ member['name_or_alias'] }}</td>
+                                <td>{{ member['email'] }}</td>
+                                <td>{{ member['class'] }}</td>
+                                <td id="passcode-{{ member['member_id'] }}">
+                                    {% if member['passcode'] %}
+                                        <code>{{ member['passcode'] }}</code>
+                                    {% else %}
+                                        <span class="text-muted">None</span>
+                                    {% endif %}
+                                </td>
+                                <td id="use-status-{{ member['member_id'] }}">
+                                    {% if member['used'] %}
+                                        <span class="badge bg-danger">Used</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-primary generate-passcode-btn" 
+                                                data-member-id="{{ member['member_id'] }}"
+                                                {% if member['used'] %}disabled{% endif %}>
+                                            <i class="bi bi-key"></i> Generate
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="passcodeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New Passcode Generated</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>A new passcode has been generated for <strong id="memberName"></strong>:</p>
+                    <div class="alert alert-primary text-center fs-3" id="generatedPasscode"></div>
+                    <p class="text-muted small">This passcode will expire at <span id="passcodeExpires"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="copyPasscodeBtn">
+                        <i class="bi bi-clipboard"></i> Copy to Clipboard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="confirmGenerateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirm Passcode Generation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to generate a new passcode for member <strong id="confirmMemberId"></strong>?</p>
+                    <p class="text-warning"><i class="bi bi-exclamation-triangle"></i> This will invalidate any existing passcode.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmGenerateBtn">Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+        <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-primary text-white">
+                <strong class="me-auto">System Notification</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/admin/passcode.js') }}"></script>
+    
+    <!-- <script>
+        const socket = io({
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
+            debug: true,
+            query: {
+                'user-type': 'admin' 
+            }
+        });
+        const socketStatus = document.getElementById('socket-status');
+        socket.on('member-login', (data) => {
+            const row = document.querySelector(`tr[data-member-id="${data.member_id}"]`);
+            if (!row) return;
+            const statusCell = row.querySelector(`#use-status-${data.member_id}`);
+            if (statusCell) {
+                statusCell.innerHTML = `
+                    <span class="badge bg-danger">Used</span>
+                    <small class="text-muted">${new Date().toLocaleTimeString()}</small>
+                `;
+            }
+            const genBtn = row.querySelector('.generate-passcode-btn');
+            if (genBtn) genBtn.disabled = true;
+            
+            showNotification(`Member ${data.member_id} logged in at ${new Date().toLocaleTimeString()}`);
+        });
+        socket.on('connect', () => {
+            socketStatus.textContent = 'Connected ✓';
+            socketStatus.className = 'badge bg-success';
+            socket.emit('join-admin-room');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+            socketStatus.textContent = 'Disconnected ✗';
+            socketStatus.className = 'badge bg-danger';
+        });
+        
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+            socketStatus.textContent = 'Connection Error';
+            socketStatus.className = 'badge bg-warning text-dark';
+        });
+        
+        document.getElementById('downloadCsvBtn').addEventListener('click', function() {
+            fetch('/api/submissions')
+                .then(response => response.json())
+                .then(data => {
+                    const headers = ['Member ID', 'Name', 'Submitted At', 'Status', 'Score'];
+                    const rows = data.map(item => [
+                        item.member_id,
+                        item.name_or_alias,
+                        item.created_at,
+                        item.status,
+                        item.score || ''
+                    ]);
+                    const csvContent = [headers, ...rows]
+                        .map(row => row.join(','))
+                        .join('\n');
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', 'member_submissions_' + new Date().toISOString().slice(0, 10) + '.csv');
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                })
+                .catch(error => {
+                    console.error('Error downloading CSV:', error);
+                    alert('Failed to download CSV');
+                });
+        });
+        document.querySelectorAll('.generate-passcode-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const memberId = this.getAttribute('data-member-id');
+                document.getElementById('confirmMemberId').textContent = memberId;
+                const confirmModal = new bootstrap.Modal(document.getElementById('confirmGenerateModal'));
+                confirmModal.show();
+                document.getElementById('confirmGenerateBtn').dataset.memberId = memberId;
+                document.getElementById('confirmGenerateBtn').dataset.originalButton = this;
+            });
+        });
+        document.getElementById('confirmGenerateBtn').addEventListener('click', async function() {
+            const memberId = this.dataset.memberId;
+            const originalButton = this.dataset.originalButton;
+            const passcodeCell = document.getElementById(`passcode-${memberId}`);
+            const statusCell = document.getElementById(`use-status-${memberId}`);
+            const confirmModal = bootstrap.Modal.getInstance(document.getElementById('confirmGenerateModal'));
+            confirmModal.hide();
+            originalButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating...';
+            originalButton.disabled = true;
+            try {
+                const response = await fetch(`/generate-passcode/${memberId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                const now = new Date();
+                
+                if (data.status === 'success') {
+                    passcodeCell.innerHTML = `
+                        <code>${data.passcode}</code>
+                        <div class="text-success small">Generated: ${now.toLocaleString()}</div>
+                    `;
+                    
+                    if (statusCell) {
+                        statusCell.innerHTML = `
+                            <span class="badge bg-success">Active</span>
+                            <small class="text-muted">Not used yet</small>
+                        `;
+                    }
+                    document.getElementById('memberName').textContent = memberId;
+                    document.getElementById('generatedPasscode').textContent = data.passcode;
+                    document.getElementById('passcodeExpires').textContent = 
+                        new Date(data.expires_at).toLocaleString();
+                    const modal = new bootstrap.Modal(document.getElementById('passcodeModal'));
+                    modal.show();
+                } else {
+                    showNotification(`Error: ${data.message || 'Failed to generate passcode'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Failed to generate passcode');
+            } finally {
+                originalButton.innerHTML = '<i class="bi bi-key"></i> Generate';
+                originalButton.disabled = false;
+            }
+        });
+        
+        document.getElementById('resetAllBtn')?.addEventListener('click', async function() {
+            const btn = this;
+            if (!confirm('Are you sure you want to reset ALL passcodes?')) {
+                return;
+            }
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Resetting...';
+            btn.disabled = true;
+            try {
+                const response = await fetch('/reset', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                    }
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to reset passcodes');
+                }
+                showNotification(`Successfully reset ${data.affected_rows || 0} passcodes`);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Reset error:', error);
+                showNotification(error.message || 'Error resetting passcodes', 'danger');
+            } finally {
+                btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Reset All Passcodes';
+                btn.disabled = false;
+            }
+        });
+        function showNotificationreset(message, type = 'success') {
+            const toastEl = document.getElementById('notificationToast');
+            const toastBody = document.getElementById('toastMessage');
+            if (toastEl && toastBody) {
+                const toastHeader = toastEl.querySelector('.toast-header');
+                toastHeader.className = `toast-header bg-${type} text-white`;
+                toastBody.textContent = message;
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
+        }
+
+        function getCSRFToken() {
+            return document.querySelector('meta[name="csrf-token"]')?.content || '';
+        }
+        
+        document.getElementById('copyPasscodeBtn')?.addEventListener('click', function() {
+            const passcode = document.getElementById('generatedPasscode').textContent;
+            navigator.clipboard.writeText(passcode).then(() => {
+                this.innerHTML = '<i class="bi bi-check-circle"></i> Copied!';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+                }, 2000);
+            });
+        });
+        
+        function showNotification(message) {
+            const toastEl = document.getElementById('notificationToast');
+            const toastBody = document.getElementById('toastMessage');
+            
+            if (toastEl && toastBody) {
+                toastBody.textContent = message;
+                const toast = new bootstrap.Toast(toastEl);
+                toast.show();
+            }
+        }
+    </script> -->
+</body>
+</html>
