@@ -1847,6 +1847,30 @@
                     }
                     traitsHtml += '</ul>';
                 }
+              let conciousnessHtml = '';
+                if (result.conciousness && Array.isArray(result.conciousness)) {
+                    conciousnessHtml += '<h3>Conciousness:</h3><ul>';
+                    for (const item of result.conciousness) {
+
+                        conciousnessHtml += `<li>Name: ${item.name}</li>`;
+                        conciousnessHtml += `<li>Score: ${item.score}</li>`;
+
+                        // Convert details object to string
+                        conciousnessHtml += '<li>Details:<ul>';
+                        for (const [key, value] of Object.entries(item.details)) {
+                            conciousnessHtml += `<li>${key}: ${value}</li>`;
+                        }
+                        conciousnessHtml += '</ul></li>';
+
+                        // Convert meta object to string
+                        conciousnessHtml += '<li>Meta:<ul>';
+                        for (const [key, value] of Object.entries(item.meta)) {
+                            conciousnessHtml += `<li>${key}: ${value}</li>`;
+                        }
+                        conciousnessHtml += '</ul></li>';
+                    }
+                    conciousnessHtml += '</ul>';
+                }
                 detailContent.innerHTML = `
                     <div class="report-header">
                         <h3>Document Analysis Report</h3>                    
@@ -1877,11 +1901,10 @@
                     </div>
                             
                     <div class="metric-section">
-                        Result is ${result.echo_result} Because ${result.reason}
                         
                         <div class="fw-bold my-3 ">
-                               ${traitsHtml}
-                            
+                            ${traitsHtml}
+                            ${conciousnessHtml}
                             
                             </div>
                         <h4 class="section-title">Stylometrics</h4>

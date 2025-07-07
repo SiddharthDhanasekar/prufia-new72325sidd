@@ -1,9 +1,11 @@
-import os
+import re
+import numpy as np
+
 import base64
 import time
 from datetime import datetime
 from app.services.admin.common import getTime
-
+import json
 from app.services.db.mysql import db_connection
 from app.services.ai_engine.score import (
     calculate_sf,
@@ -21,6 +23,8 @@ from app.services.ai_engine.echo_scoring_clean import echo_decision, final_prufi
 from app.services.ai_engine.prufia_raw_human_extractor import extract_raw_metrics
 from app.services.ai_engine.prufia_23layer_extractor.echo_match_23layer_threshold2 import run_echo_decision_logic
 from app.services.ai_engine.update.run_pipeline import run_full_pipeline
+from app.services.ai_engine.conciousness.prufia_consciousness_observer_23_24_30 import ConsciousnessObserver
+from app.services.ai_engine.conciousness.simple_analyzer import SimpleAnalyzer
 
 from flask import (
      current_app
@@ -112,7 +116,16 @@ def saveResult(filename, teacher, input_data, final_score, timestamp):
     finally:
         if conn:
             conn.close()
-
+def convert_for_json(data):
+    """Recursively convert objects for JSON serialization."""
+    if isinstance(data, np.bool_):
+        return bool(data)
+    elif isinstance(data, list):
+        return [convert_for_json(item) for item in data]
+    elif isinstance(data, dict):
+        return {key: convert_for_json(value) for key, value in data.items()}
+    else:
+        return data
 def workingScore(assesses, socketio):
 
     matchresult = []
@@ -172,7 +185,12 @@ def workingScore(assesses, socketio):
 
                 # result, traits = run_echo_decision_logic(assess['content'])
                 # echo_result = result["result"]
-                
+                sentences = [s.strip() for s in re.split(r'[.!?]', assess['content']) if s.strip()]
+                analyzer_instance = SimpleAnalyzer()
+                observer = ConsciousnessObserver(analyzer_instance)
+                conciousness = observer.observe_layers(assess['content'], sentences)
+                results_as_dicts = [convert_for_json(result.to_dict()) for result in conciousness]
+
                 result = run_full_pipeline(assess['content'])
                 traits = result["metrics"]
                 print("Traits:", traits)
@@ -207,6 +225,7 @@ def workingScore(assesses, socketio):
                     "teacher": teacher,
                     "label": label,
                     "traits": traits,
+                    "conciousness": results_as_dicts,
                     # "htl_result": htl_result,
                     # "mdt_passed": mdt_passed,
                     # "drift_passed": drift_passed,
