@@ -205,9 +205,9 @@ def workingScore(assesses, socketio):
                 
                 # print("htl_result:", htl_result, "Echo before drift:", echo, "mdt_passed:", mdt_passed, "drift_passed:", drift_passed, "fusion_passed:", fusion_passed, "Echo after drift:", echo_result)
 
-                if final_result["status"].lower() == "match":
+                if final_result.lower() == "match":
                     label, flag = "Match", "green"
-                elif final_result["status"].lower() == "mismatch":
+                elif final_result.lower() == "mismatch":
                     label, flag = "Mismatch", "red"
                 else:
                     label, flag = "Needs Review", "gray"  # Escalation zone – pass to MDT, HTL, or Drift"
@@ -217,8 +217,8 @@ def workingScore(assesses, socketio):
                 item = {
                     "flag": flag,
                     # "base_score": round(final_score, 2),
-                    "echo_result": final_result["status"],
-                    "reason": final_result["reason"],
+                    "echo_result": final_result,
+                    "reason": "",
                     "filename": filename,
                     "name_or_alias": "",
                     "time": timestamp,

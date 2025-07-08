@@ -7,6 +7,7 @@ from app.services.ai_engine.update.behavioral_engine import run_behavioral_engin
 from app.services.ai_engine.update.resistance_engine import run_resistance_engine
 from app.services.ai_engine.update.tentacation_logic import tentacation_decision
 from app.services.ai_engine.update.cluster_matcher import cluster_matcher
+from app.services.ai_engine.update.updated_cluster_matcher import run_all_clusters
 from app.services.ai_engine.update.final_score import evaluate_clearance
 
 import json
@@ -22,10 +23,10 @@ def run_full_pipeline(text):
     tentacation_result = tentacation_decision(metrics)
 
     # Step 3: Cluster wall logic
-    cluster_result = cluster_matcher(metrics)
-
+    cluster_result = run_all_clusters(metrics)
+    print("cluster_result:", cluster_result)
     # Step 4: Final clearance result
-    final_result = evaluate_clearance(tentacation_result, cluster_result)
+    final_result = evaluate_clearance(cluster_result)
 
     return {
         "metrics": metrics,

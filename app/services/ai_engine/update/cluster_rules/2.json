@@ -1,0 +1,30 @@
+ {
+    "rule_name": "TEST_MATCH_DOC_2",
+    "description": "Match rule targeting doc 2 using narrow trait bands",
+    "conditions": {
+      "PGFI_min": 10.7,
+      "PGFI_max": 10.9,
+      "MeaningClarity_min": 72.7,
+      "MeaningClarity_max": 73.2,
+      "TT_min": 48,
+      "TT_max": 50,
+      "SyntacticChaos_min": 9.5,
+      "SyntacticChaos_max": 12.0,
+      "SM_min": 36,
+      "SM_max": 38,
+      "SF_min": 15.5,
+      "SF_max": 16.0,
+      "VocabularyEntropy_min": 59,
+      "VocabularyEntropy_max": 61
+    },
+    "required_matches": 3,
+    "out_of": 3,
+    "traits": [
+      "PGFI",
+      "TT",
+      "MeaningClarity"
+    ],
+    "logic": "CUSTOM",
+    "result": "match",
+    "failure_result": "mismatch"
+  }
