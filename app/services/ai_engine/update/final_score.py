@@ -1,24 +1,27 @@
-
-# final_score.py
-# PRUFIA Final Score Logic – Binary MATCH/MISMATCH Output
-
 def evaluate_clearance(cluster_result):
-    '''
-    Determines final result based on trap/cluster matching:
-    - If ANY traps or clusters are hit, return MISMATCH
-    - If NONE are hit, return MATCH
-    '''
-    match_count = 0
-    
-    # Iterate through each dictionary in the list
-    for result in cluster_result:
-        # Check if the outcome is 'match'
-        if result.get('outcome') == 'match':
-            # Increment the counter
-            match_count += 1
-            
+    # Sort clusters by trap priority — traps must be named clearly
+    trap_keywords = ["trap", "block", "firewall"]
+    trap_mismatches = [r for r in cluster_result if r['outcome'].lower() == 'mismatch' and any(k in r['rule'].lower() for k in trap_keywords)]
 
-    if match_count > 0:
-        return "match"
-    else:
-        return "mismatch"
+    if trap_mismatches:
+        return {
+            "status": "MISMATCH",
+            "reason": f"Blocked by trap: {trap_mismatches[0]['rule']}"
+        }
+
+    # Check if any matching cluster passed (soft identity confirmation)
+    has_match = any(r['outcome'].lower() == 'match' or r['outcome'].lower() == 'pass' for r in cluster_result)
+    if has_match:
+        return {
+            "status": "MATCH",
+            "reason": "At least one cluster passed"
+        }
+
+    # Default: nothing matched, no trap hit — deny access
+    return {
+        "status": "MISMATCH",
+        "reason": "No matching cluster"
+    }
+
+
+

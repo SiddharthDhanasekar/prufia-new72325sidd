@@ -24,7 +24,6 @@ def run_full_pipeline(text):
 
     # Step 3: Cluster wall logic
     cluster_result = run_all_clusters(metrics)
-    print("cluster_result:", cluster_result)
     # Step 4: Final clearance result
     final_result = evaluate_clearance(cluster_result)
 
