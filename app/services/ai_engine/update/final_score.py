@@ -10,7 +10,8 @@ def evaluate_clearance(cluster_result):
         }
 
     # Check if any matching cluster passed (soft identity confirmation)
-    has_match = any(r['outcome'].lower() == 'match' or r['outcome'].lower() == 'pass' for r in cluster_result)
+    # has_match = any(r['outcome'].lower() == 'match' or r['outcome'].lower() == 'pass' for r in cluster_result)
+    has_match = any(r['outcome'].lower() == 'match' for r in cluster_result)
     if has_match:
         return {
             "status": "MATCH",

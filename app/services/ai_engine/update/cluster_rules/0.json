@@ -1,0 +1,16 @@
+{
+  "rule_name": "TRAP_PGFI_WINDOW_DOC_13",
+  "description": "Trap: PGFI between 10.0 and 10.3 flagged as mimic",
+  "conditions": {
+    "PGFI_min": 10.0,
+    "PGFI_max": 10.3
+  },
+  "required_matches": 1,
+  "out_of": 1,
+  "traits": [
+    "PGFI"
+  ],
+  "logic": "CUSTOM",
+  "result": "mismatch",
+  "failure_result": "pass"
+}
