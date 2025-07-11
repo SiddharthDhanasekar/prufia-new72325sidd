@@ -1,12 +1,12 @@
 import os
 import time
 import shutil
-
+import unicodedata
+import re
 from flask import (
     Blueprint, request, jsonify, render_template,
     redirect, url_for, session, current_app
 )
-from werkzeug.utils import secure_filename
 from run import socketio
 
 # Service‐layer imports
@@ -69,6 +69,49 @@ def validations_content():
         {'assignment': 'Assignment 2', 'status': 'Needs review'}
     ]
     return render_template('teacher/validations.html', validations=validations)
+
+
+# Existing constants
+_filename_ascii_strip_re = re.compile(r"[^A-Za-z0-9_.-]")
+_windows_device_files = ("CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", 
+                        "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", 
+                        "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9")
+
+def secure_filename(filename: str, teacher: str = "teacher1", semester: str = "semester1",timestamp:str="") -> str:
+    """Generate a secure filename in format: OriginalName-teacher-semester-timestamp.ext
+    
+    Args:
+        filename: Original filename (e.g., "My File.pdf")
+        teacher: Teacher identifier (default: "teacher1")
+        semester: Semester identifier (default: "semester1")
+        
+    Returns:
+        Formatted filename (e.g., "My_File-john_doe-fall2023-20230615143022.pdf")
+    """
+    # 1. Process original filename
+    filename = unicodedata.normalize("NFKD", filename)
+    filename = filename.encode("ascii", "ignore").decode("ascii")
+    
+    # Replace path separators and special chars
+    for sep in os.sep, os.path.altsep:
+        if sep:
+            filename = filename.replace(sep, " ")
+    
+    # Clean while preserving spaces between words
+    safe_name = _filename_ascii_strip_re.sub("", "_".join(filename.split())).strip("._")
+    
+    # 2. Split name and extension
+    name_parts = safe_name.rsplit(".", 1)
+    base_name = name_parts[0]
+    ext = f".{name_parts[1]}" if len(name_parts) > 1 else ""
+    
+   # 4. Handle Windows reserved names
+    if os.name == "nt" and base_name.upper() in _windows_device_files:
+        base_name = f"_{base_name}"
+    
+    # 5. Combine all parts
+    return f"{base_name}-{teacher}-{semester}-{timestamp}{ext}"
+
 
 
 @teacher_bp.route('/upload_assignments', methods=['POST'])
