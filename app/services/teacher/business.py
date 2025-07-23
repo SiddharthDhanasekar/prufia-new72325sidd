@@ -193,8 +193,7 @@ def workingScore(assesses, socketio):
 
                 result = run_full_pipeline(assess['content'])
                 traits = result["metrics"]
-                print("Traits:", traits)
-                final_result = result["final_result"]["status"]
+                final_result = result["final_result"]
                 
                 # htl_result = check_htl(traits)
                 # mdt_passed = check_mdt(traits)

@@ -9,6 +9,7 @@ from app.services.ai_engine.update.tentacation_logic import tentacation_decision
 from app.services.ai_engine.update.cluster_matcher import cluster_matcher
 from app.services.ai_engine.update.updated_cluster_matcher import run_all_clusters
 from app.services.ai_engine.update.final_score import evaluate_clearance
+from app.services.ai_engine.update.evaluate_document_prufia_abbreviated_only import evaluate_document_prufia_expanded_trust
 
 import json
 
@@ -23,14 +24,16 @@ def run_full_pipeline(text):
     tentacation_result = tentacation_decision(metrics)
 
     # Step 3: Cluster wall logic
-    cluster_result = run_all_clusters(metrics)
+    # cluster_result = run_all_clusters(metrics)
     # Step 4: Final clearance result
-    final_result = evaluate_clearance(cluster_result)
+    # final_result = evaluate_clearance(cluster_result)
+
+    final_result = evaluate_document_prufia_expanded_trust(metrics)
 
     return {
         "metrics": metrics,
         "tentacation_result": tentacation_result,
-        "cluster_result": cluster_result,
+        # "cluster_result": cluster_result,
         "final_result": final_result
     }
 
