@@ -18,7 +18,7 @@ def matches_hard_traps(doc):
 def matches_combo_hard_trap(doc):
     """Advanced Hard Trap Combo (MRV + TT + PGFI + SF/SM)"""
     return (
-        doc.get("MRV", 0) > 17 and
+        doc.get("MicroRhythmVariance", 0) > 17 and
         doc.get("TT", 0) > 49.99 and
         doc.get("PGFI", 0) > 8 and
         (doc.get("SF", 100) < 45 or doc.get("SM", 100) < 52)
