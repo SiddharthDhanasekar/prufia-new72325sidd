@@ -2,7 +2,7 @@
 # PRUFIA Safe Logic – Developer Version (Abbreviated Signal Names Only)
 
 def matches_hard_traps(doc):
-    """Fake Hard Traps (Do not use real thresholds). Adding in Real Hard traps."""
+    """Hard Trap Detection – Includes individual and advanced combo conditions."""
     return (
         doc.get("PGFI", 0) > 23 or
         doc.get("PGFI", 100) < 7 or
@@ -12,17 +12,16 @@ def matches_hard_traps(doc):
         doc.get("MicroRhythmVariance", 0) > 100 or
         doc.get("PF", 0) > 5.5 or
         doc.get("PunctuationRhythm", 0) > 60 or
-        doc.get("SentenceVariation", 0) > 850
+        doc.get("SentenceVariation", 0) > 850 or
+        (
+            # Combo Hard Trap: MRV + TT + PGFI + SF/SM
+            doc.get("MicroRhythmVariance", 0) > 17 and
+            doc.get("TT", 0) > 49.99 and
+            doc.get("PGFI", 0) > 8 and
+            (doc.get("SF", 100) < 45 or doc.get("SM", 100) < 52)
+        )
     )
 
-def matches_combo_hard_trap(doc):
-    """Advanced Hard Trap Combo (MRV + TT + PGFI + SF/SM)"""
-    return (
-        doc.get("MicroRhythmVariance", 0) > 17 and
-        doc.get("TT", 0) > 49.99 and
-        doc.get("PGFI", 0) > 8 and
-        (doc.get("SF", 100) < 45 or doc.get("SM", 100) < 52)
-    )
     
 def count_violation_points(doc):
     """Soft Trap: 5-point violation system"""
