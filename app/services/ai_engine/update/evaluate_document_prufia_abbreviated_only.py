@@ -4,8 +4,8 @@
 def matches_hard_traps(doc):
     """Hard Trap Detection – Includes individual and advanced combo conditions."""
     return (
-        doc.get("PGFI", 0) > 23 or
-        doc.get("PGFI", 100) < 7 or
+        doc.get("PGFI", 0) > 55 or
+        doc.get("PGFI", 100) < 5.5 or
         doc.get("SyntacticChaos", 100) < 13 or
         doc.get("TT", 0) > 59 or
         doc.get("TT", 100) < 31 or
@@ -43,7 +43,7 @@ def matches_safe_human_rescue(doc):
     return (
         doc.get("TT", 100) < 50 and
         doc.get("PF", 100) < 2.5 and
-        doc.get("SentenceVariation", 0) > 60
+        doc.get("SentenceVariation", 0) > 49.99
     )
 
 
