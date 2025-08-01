@@ -23,7 +23,7 @@ def matches_hard_traps(doc):
         (
             11 <= doc.get("PGFI", 0) <= 17 and
             doc.get("PF", 0) >= 2.0 and
-            doc.get("SyntheticChaos", 100) <= 75 and
+            doc.get("SyntacticChaos", 100) <= 75 and
             doc.get("SM", 0) <= 54 and
             doc.get("TT", 0) >= 45
         ) or
@@ -31,21 +31,21 @@ def matches_hard_traps(doc):
             doc.get("PF", 0) >= 2.25 and
             doc.get("SM", 0) < 58 and
             doc.get("SF", 0) < 43 and
-            doc.get("SyntheticChaos", 100) < 80 and
+            doc.get("SyntacticChaos", 100) < 80 and
             doc.get("PGFI", 0) < 17
         ) or
         (
             doc.get("PF", 0) > 1.85 and
             doc.get("SM", 0) < 58 and
             doc.get("SF", 0) < 48 and
-            doc.get("SyntheticChaos", 100) < 80 and
+            doc.get("SyntacticChaos", 100) < 80 and
             doc.get("PGFI", 0) < 17.5 and
             doc.get("TT", 0) > 45
         ) or
         (
             doc.get("MC", 0) >= 63 and
             doc.get("SM", 0) <= 56 and
-            doc.get("SyntheticChaos", 100) <= 75 and
+            doc.get("SyntacticChaos", 100) <= 75 and
             doc.get("PF", 0) >= 2.1
         ) or
         (
@@ -53,23 +53,23 @@ def matches_hard_traps(doc):
             doc.get("PF", 0) > 2.1 and
             doc.get("TT", 0) > 46.5 and
             doc.get("SM", 0) < 52 and
-            doc.get("SyntheticChaos", 100) < 78
+            doc.get("SyntacticChaos", 100) < 78
         ) or
         (
             doc.get("PF", 0) > 2.2 and
             doc.get("StructureConsistency", 0) > 25 and
-            doc.get("SyntheticChaos", 100) < 75 and
+            doc.get("SyntacticChaos", 100) < 75 and
             10 <= doc.get("PGFI", 0) <= 18 and
             doc.get("SM", 0) < 53
         ) or
         (
             doc.get("PF", 0) > 2.15 and
-            doc.get("SyntheticChaos", 100) < 60 and
+            doc.get("SyntacticChaos", 100) < 60 and
             doc.get("SF", 0) < 42 and
             doc.get("SM", 0) < 55
         ) or
         (
-            doc.get("SyntheticChaos", 100) >= 80 and
+            doc.get("SyntacticChaos", 100) >= 80 and
             doc.get("StructureConsistency", 0) < 25 and
             doc.get("PGFI", 0) < 19 and
             doc.get("PF", 0) > 2
